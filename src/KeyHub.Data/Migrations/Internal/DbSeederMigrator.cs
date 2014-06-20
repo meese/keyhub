@@ -35,7 +35,7 @@ namespace KeyHub.Data.Migrations
         public void MigrateToLatestVersion()
         {
             var seedList = new List<IMigrationDataSeeder<TContext>>();
-
+           // Database.SetInitializer(new MigrateDatabaseToLatestVersion<KeyHub.Data.DataContext, MigrationConfiguration>()); 
             // Apply migrations
             foreach (var migrationId in GetPendingMigrations())
             {

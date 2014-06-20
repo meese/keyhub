@@ -15,7 +15,7 @@ namespace KeyHub.BusinessLogic.BusinessRules
         /// <returns>A collection of errors, or an empty collection if the business rule succeeded</returns>
         protected override IEnumerable<BusinessRuleValidationResult> ExecuteValidation(CustomerApp entity, DbEntityEntry entityEntry)
         {
-            if (entity.LicenseCustomerApps.Count == 0 && entityEntry.State != EntityState.Deleted)
+            if (entity.LicenseCustomerApps.Count == 0 && entityEntry.State != System.Data.Entity.EntityState.Deleted)
             {
                 yield return new BusinessRuleValidationResult("Licensed application should have at least one license", this, "SelectedLicenseGUIDs");
             }
