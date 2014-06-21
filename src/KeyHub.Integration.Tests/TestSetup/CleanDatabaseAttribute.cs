@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
-using System.Data.EntityClient;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;

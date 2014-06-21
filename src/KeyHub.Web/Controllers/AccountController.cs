@@ -388,7 +388,7 @@ namespace KeyHub.Web.Controllers
             }
             catch (DbUpdateException e)
             {
-                var innerException1 = e.InnerException as UpdateException;
+                var innerException1 = e.InnerException as System.Data.Entity.Core.UpdateException;
                 if (innerException1 == null)
                     throw;
 
