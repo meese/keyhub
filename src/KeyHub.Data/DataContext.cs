@@ -15,13 +15,14 @@ using KeyHub.Core.Data;
 using KeyHub.Data.BusinessRules;
 using KeyHub.Model;
 using System.Web;
+using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace KeyHub.Data
 {
     /// <summary>
     /// Provides data access to all tables and collections
     /// </summary>
-    public class DataContext : DbContext, IDataContext
+    public class DataContext : IdentityDbContext, IDataContext
     {
         /// <summary>
         /// Gets or sets the BusinessRuleExecutorFactory
