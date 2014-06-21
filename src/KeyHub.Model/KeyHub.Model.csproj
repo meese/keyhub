@@ -32,18 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+    <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="EntityFramework.SqlServer">
-      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.AspNet.Identity.Core">
-      <HintPath>..\packages\Microsoft.AspNet.Identity.Core.2.0.1\lib\net45\Microsoft.AspNet.Identity.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.AspNet.Identity.EntityFramework">
-      <HintPath>..\packages\Microsoft.AspNet.Identity.EntityFramework.2.0.1\lib\net45\Microsoft.AspNet.Identity.EntityFramework.dll</HintPath>
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -63,7 +54,6 @@
     <Compile Include="Definition\Application\TransactionIgnoredItem.cs" />
     <Compile Include="Definition\Application\CustomerAppIssue.cs" />
     <Compile Include="Definition\Application\TransactionStatus.cs" />
-    <Compile Include="Definition\Membership\MembershipIdentity.cs" />
     <Compile Include="Definition\Membership\OAuthMembership.cs" />
     <Compile Include="Definition\Membership\Rights\BelongToEntity.cs" />
     <Compile Include="Definition\Membership\Rights\EditLicenseInfo.cs" />
@@ -75,7 +65,6 @@
     <Compile Include="Definition\Membership\Rights\VendorAdmin.cs" />
     <Compile Include="Definition\Membership\Rights\VendorReporting.cs" />
     <Compile Include="Definition\Application\VendorCredential.cs" />
-    <Compile Include="Definition\Membership\AspIdentityUser.cs" />
     <Compile Include="IModelItem.cs" />
     <Compile Include="Logic\Application\CustomerApp.cs" />
     <Compile Include="Logic\Application\DomainLicense.cs" />

@@ -15,7 +15,6 @@ using KeyHub.Core.Data;
 using KeyHub.Data.BusinessRules;
 using KeyHub.Model;
 using System.Web;
-using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace KeyHub.Data
 {

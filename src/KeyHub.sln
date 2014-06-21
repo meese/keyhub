@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
-MinimumVisualStudioVersion = 10.0.40219.1
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyHub.Web", "KeyHub.Web\KeyHub.Web.csproj", "{5706BEBF-F361-4845-9514-DC085FBEC39E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyHub.Tests", "KeyHub.Tests\KeyHub.Tests.csproj", "{7162C9FF-2E8F-4CB3-8A4A-E85D4405C48D}"
