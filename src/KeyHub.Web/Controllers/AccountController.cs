@@ -13,7 +13,9 @@ using System.Web.Mvc;
 using System.Web.Security;
 using DotNetOpenAuth.AspNet;
 using KeyHub.Model;
+using KeyHub.Model.Definition.Identity;
 using Microsoft.Ajax.Utilities;
+using Microsoft.AspNet.Identity;
 using Microsoft.Web.WebPages.OAuth;
 using KeyHub.Data;
 using KeyHub.Web.Models;
@@ -239,18 +241,60 @@ namespace KeyHub.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var newMembershipUserIdentifier = Guid.NewGuid().ToString();
 
                 // Attempt to register the user
                 try
                 {
-                    WebSecurity.CreateUserAndAccount(newMembershipUserIdentifier, model.Password, new { Email = model.Email });
+                    using (var dataContext = dataContextFactory.Create())
+                    {
+                        var usermanager = dataContext.CreateUserManager();
+                        var newMembershipUserIdentifier = Guid.NewGuid().ToString();
+                        var keyHubUser = new KeyHubUser
+                        {
+                            Id = newMembershipUserIdentifier,
+                            UserName = model.Email,
+                            Email = model.Email
+                        };
+
+                        var user = new User
+                        {
+                            MembershipUserIdentifier = newMembershipUserIdentifier,
+                            AspIdentityUserIdentifier = newMembershipUserIdentifier,
+                            Email = model.Email
+                        };
+
+                        keyHubUser.User = user;
+                        var result = usermanager.Create(keyHubUser, model.Password);
+                        if (result.Succeeded)
+                        {
+                            //var code = usermanager.GenerateEmailConfirmationToken(user.Id);
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", result.Errors.ToString());
+
+                        }
+
+                       /* if (WebSecurity.Login(newMembershipUserIdentifier, model.Password))
+                        {
+                            if (Url.IsLocalUrl(returnUrl))
+                            {
+                                return Redirect(returnUrl);
+                            }
+                            else
+                            {
+                                return RedirectToAction("Index", "Home");
+                            }
+                        }
+                        ModelState.AddModelError("", "Failed to create a user with the provided email and password.");*/
+                    }
                 }
+
                 catch (Exception exception)
                 {
                     if (exception.Message.Contains("IX_Email") && exception.Message.Contains("duplicate"))
                     {
-                        ModelState.AddModelError("", 
+                        ModelState.AddModelError("",
                             "The email address registered is already in use on this site using a different login method.  "
                             + "Please login with the original login method used for that email.  "
                             + "Then you may associate other login methods with your account.  ");
@@ -260,18 +304,6 @@ namespace KeyHub.Web.Controllers
                     throw;
                 }
 
-                if (WebSecurity.Login(newMembershipUserIdentifier, model.Password))
-                {
-                    if (Url.IsLocalUrl(returnUrl))
-                    {
-                        return Redirect(returnUrl);
-                    }
-                    else
-                    {
-                        return RedirectToAction("Index", "Home");
-                    }
-                }
-                ModelState.AddModelError("", "Failed to create a user with the provided email and password.");
             }
 
             // If we got this far, something failed, redisplay form

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using KeyHub.Model.Definition.Identity;
 
 namespace KeyHub.Model
 {
@@ -29,6 +30,13 @@ namespace KeyHub.Model
         [Required]
         [StringLength(40)]
         public string MembershipUserIdentifier { get; set; }
+
+        /// <summary>
+        /// The field used by ASP.NET Membership system to identify users (a guid value).
+        /// </summary>
+       // [Required]
+        [StringLength(40)]
+        public string AspIdentityUserIdentifier { get; set; }
 
         /// <summary>
         /// E-mail address for this user (is simply 'admin' for the default admin)

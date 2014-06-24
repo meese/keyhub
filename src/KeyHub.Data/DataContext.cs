@@ -15,6 +15,7 @@ using KeyHub.Core.Data;
 using KeyHub.Data.BusinessRules;
 using KeyHub.Model;
 using System.Web;
+using KeyHub.Model.Definition.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace KeyHub.Data
@@ -203,5 +204,22 @@ namespace KeyHub.Data
 
             return base.ShouldValidateEntity(entityEntry);
         }
+
+        public KeyHubUserManager CreateUserManager()
+        {
+            var userManager = new KeyHubUserManager(new UserStore<KeyHubUser>(this));
+
+            return userManager;
+        }
+
+     /*   public KeyHubSignInManager CreateSignInManager(IAuthenticationManager auth)
+        {
+            var signInManager = new KeyHubSignInManager(this.CreateUserManager(), auth);
+            return signInManager;
+        }*/
+
+
     }
+
+
 }

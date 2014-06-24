@@ -115,6 +115,8 @@
     <Compile Include="IDataContextByTransaction.cs" />
     <Compile Include="IDataContextFactory.cs" />
     <Compile Include="IDataContextByUser.cs" />
+    <Compile Include="IKeyHubUserManager.cs" />
+    <Compile Include="KeyHubUserManager.cs" />
     <Compile Include="Migrations\201303260850051_InitialCreate.cs" />
     <Compile Include="Migrations\201303260850051_InitialCreate.Designer.cs">
       <DependentUpon>201303260850051_InitialCreate.cs</DependentUpon>
@@ -134,6 +136,10 @@
     <Compile Include="Migrations\201406210220270_identitydbcontext.cs" />
     <Compile Include="Migrations\201406210220270_identitydbcontext.Designer.cs">
       <DependentUpon>201406210220270_identitydbcontext.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201406241936467_id2.cs" />
+    <Compile Include="Migrations\201406241936467_id2.Designer.cs">
+      <DependentUpon>201406241936467_id2.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\MigrationConfiguration.cs" />
     <Compile Include="Migrations\Internal\DbSeederMigrator.cs" />
@@ -174,6 +180,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201406210220270_identitydbcontext.resx">
       <DependentUpon>201406210220270_identitydbcontext.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201406241936467_id2.resx">
+      <DependentUpon>201406241936467_id2.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

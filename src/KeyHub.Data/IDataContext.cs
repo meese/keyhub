@@ -50,5 +50,7 @@ namespace KeyHub.Data
         /// <param name="identity">Identity of the user</param>
         /// <returns>Currently logged in use</returns>
         User GetUser(IIdentity identity);
+
+        KeyHubUserManager CreateUserManager();
     }
 }
