@@ -16,6 +16,7 @@ using KeyHub.Model;
 using KeyHub.Model.Definition.Identity;
 using Microsoft.Ajax.Utilities;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Web.WebPages.OAuth;
 using KeyHub.Data;
 using KeyHub.Web.Models;
@@ -178,7 +179,34 @@ namespace KeyHub.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel model, string returnUrl)
         {
-            if (ModelState.IsValid)
+            using (var dataContext = dataContextFactory.Create())
+            {
+                var signInManager = new KeyHubSignInManager(dataContext.CreateUserManager(),
+                    HttpContext.GetOwinContext().Authentication);
+                if (!ModelState.IsValid)
+                {
+                    return View(model);
+                }
+
+                // This doen't count login failures towards lockout only two factor authentication
+                // To enable password failures to trigger lockout, change to shouldLockout: true
+                var result = signInManager.PasswordSignIn(model.Email, model.Password, model.RememberMe,
+                            shouldLockout: false);
+                switch (result)
+                {
+                    case SignInStatus.Success:
+                        return Redirect(returnUrl);
+                    //case SignInStatus.LockedOut:
+                     //   return Redirect(returnUrl);
+                    //case SignInStatus.RequiresVerification:
+                    //    return RedirectToAction("SendCode", new {ReturnUrl = returnUrl});
+                    case SignInStatus.Failure:
+                    default:
+                        ModelState.AddModelError("", "Invalid login attempt.");
+                        return View(model);
+                }
+            }
+            /*  if (ModelState.IsValid)
             {
                 using (var dataContext = dataContextFactory.Create())
                 {
@@ -201,7 +229,7 @@ namespace KeyHub.Web.Controllers
 
                     ModelState.AddModelError("", "The user name or password provided is incorrect.");
                 }
-            }
+            }*/
 
             // If we got this far, something failed, redisplay form
             return View(model);
