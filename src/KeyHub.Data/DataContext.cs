@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using KeyHub.Common;
 using KeyHub.Core.Data;
 using KeyHub.Data.BusinessRules;
+using KeyHub.Data.Managers;
 using KeyHub.Model;
 using System.Web;
 using KeyHub.Model.Definition.Identity;
@@ -208,10 +209,14 @@ namespace KeyHub.Data
         public KeyHubUserManager CreateUserManager()
         {
             var userManager = new KeyHubUserManager(new UserStore<KeyHubUser>(this));
-
             return userManager;
         }
 
+        public KeyHubRoleManager CreateRoleManager()
+        {
+            var roleManager = new KeyHubRoleManager(new RoleStore<KeyHubRole>(this));
+            return roleManager;
+        }
      /*   public KeyHubSignInManager CreateSignInManager(IAuthenticationManager auth)
         {
             var signInManager = new KeyHubSignInManager(this.CreateUserManager(), auth);

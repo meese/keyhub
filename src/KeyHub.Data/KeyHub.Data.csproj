@@ -72,6 +72,7 @@
     <Compile Include="ApplicationIssues\ApplicationIssueUnitOfWork.cs" />
     <Compile Include="ApplicationIssues\IApplicationIssueUnitOfWork.cs" />
     <Compile Include="Boot\EnitityBoot.cs" />
+    <Compile Include="Boot\IdentityBoot.cs" />
     <Compile Include="Boot\MembershipBoot.cs" />
     <Compile Include="Boot\SettingsBoot.cs" />
     <Compile Include="BusinessRules\BusinessRule.cs" />
@@ -115,8 +116,8 @@
     <Compile Include="IDataContextByTransaction.cs" />
     <Compile Include="IDataContextFactory.cs" />
     <Compile Include="IDataContextByUser.cs" />
-    <Compile Include="IKeyHubUserManager.cs" />
-    <Compile Include="KeyHubUserManager.cs" />
+    <Compile Include="Managers\KeyHubRoleManager.cs" />
+    <Compile Include="Managers\KeyHubUserManager.cs" />
     <Compile Include="Migrations\201303260850051_InitialCreate.cs" />
     <Compile Include="Migrations\201303260850051_InitialCreate.Designer.cs">
       <DependentUpon>201303260850051_InitialCreate.cs</DependentUpon>
@@ -140,6 +141,14 @@
     <Compile Include="Migrations\201406241936467_id2.cs" />
     <Compile Include="Migrations\201406241936467_id2.Designer.cs">
       <DependentUpon>201406241936467_id2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201406252345499_roles.cs" />
+    <Compile Include="Migrations\201406252345499_roles.Designer.cs">
+      <DependentUpon>201406252345499_roles.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201406260030382_roles2.cs" />
+    <Compile Include="Migrations\201406260030382_roles2.Designer.cs">
+      <DependentUpon>201406260030382_roles2.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\MigrationConfiguration.cs" />
     <Compile Include="Migrations\Internal\DbSeederMigrator.cs" />
@@ -183,6 +192,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201406241936467_id2.resx">
       <DependentUpon>201406241936467_id2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201406252345499_roles.resx">
+      <DependentUpon>201406252345499_roles.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201406260030382_roles2.resx">
+      <DependentUpon>201406260030382_roles2.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

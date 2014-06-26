@@ -15,7 +15,9 @@ namespace KeyHub.Web
 {
     public class OwinStartup
     {
-
+        //owin is required for parts of asp.identity esp authentication which is what we are using it for here
+        //you could remove owin but you would have to use old forms auth instead
+        //should probabley not use it besides for owncontext.auth so we don't introduce another middlelayer to this project
         public void Configuration(IAppBuilder app)
         {
 

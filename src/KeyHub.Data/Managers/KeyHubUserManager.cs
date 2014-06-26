@@ -1,5 +1,6 @@
 ﻿using System.Data.Entity;
 using System.Security.Claims;
+using KeyHub.Model;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
@@ -15,91 +16,53 @@ namespace KeyHub.Data
 {
 // Configure the application user manager used in this application. UserManager is defined in ASP.NET Identity and is used by the application.
 
-    public class KeyHubUserManager : UserManager<KeyHubUser>, IKeyHubUserManager
+    public class KeyHubUserManager : UserManager<KeyHubUser>
     {
         public KeyHubUserManager(IUserStore<KeyHubUser> store)
             : base(store)
         {
-           this.UserValidator = new UserValidator<KeyHubUser>(this)
+            this.UserValidator = new UserValidator<KeyHubUser>(this)
             {
                 AllowOnlyAlphanumericUserNames = false,
                 RequireUniqueEmail = true
             };
 
-           // Configure validation logic for passwords
-           this.PasswordValidator = new PasswordValidator
-           {
-               RequiredLength = 6,
-               RequireNonLetterOrDigit = false,
-               RequireDigit = false,
-               RequireLowercase = false,
-               RequireUppercase = false,
-           };
+            // Configure validation logic for passwords
+            this.PasswordValidator = new PasswordValidator
+            {
+                RequiredLength = 6,
+                RequireNonLetterOrDigit = false,
+                RequireDigit = false,
+                RequireLowercase = false,
+                RequireUppercase = false,
+            };
         }
 
-        public IdentityResult CreateUser(KeyHubUser user,String password)
+        public IdentityResult CreateUser(String identifier,String email, String name, String password)
+        {
+            var keyHubUser = new KeyHubUser
+            {
+                Id = identifier,
+                UserName = name,
+                Email = email
+            };
+
+            var user = new User
+            {
+                MembershipUserIdentifier = identifier,
+                AspIdentityUserIdentifier = identifier,
+                Email = name
+            };
+
+            keyHubUser.User = user;
+            return this.Create(keyHubUser, password);
+        }
+
+        public IdentityResult CreateUser(KeyHubUser user, String password)
         {
             return this.Create(user, password);
         }
-        /* public static KeyHubUserManager Create(IdentityFactoryOptions<KeyHubUserManager> options,
-             DataContext context)
-         {
-             var manager = new KeyHubUserManager(new UserStore<KeyHubUser>(context));
-             // Configure validation logic for usernames
-             manager.UserValidator = new UserValidator<KeyHubUser>(manager)
-             {
-                 AllowOnlyAlphanumericUserNames = false,
-                 RequireUniqueEmail = true
-             };
-             // Configure validation logic for passwords
-             manager.PasswordValidator = new PasswordValidator
-             {
-                 RequiredLength = 6,
-                 RequireNonLetterOrDigit = true,
-                 RequireDigit = true,
-                 RequireLowercase = true,
-                 RequireUppercase = true,
-             };
-             // Configure user lockout defaults
-             manager.UserLockoutEnabledByDefault = true;
-             manager.DefaultAccountLockoutTimeSpan = TimeSpan.FromMinutes(5);
-             manager.MaxFailedAccessAttemptsBeforeLockout = 5;
-             // Register two factor authentication providers. This application uses Phone and Emails as a step of receiving a code for verifying the user
-             // You can write your own provider and plug in here.
-             manager.RegisterTwoFactorProvider("PhoneCode", new PhoneNumberTokenProvider<KeyHubUser>
-             {
-                 MessageFormat = "Your security code is: {0}"
-             });
-             manager.RegisterTwoFactorProvider("EmailCode", new EmailTokenProvider<KeyHubUser>
-             {
-                 Subject = "SecurityCode",
-                 BodyFormat = "Your security code is {0}"
-             });
-             manager.EmailService = new EmailService();
-             manager.SmsService = new SmsService();
-             var dataProtectionProvider = options.DataProtectionProvider;
-             if (dataProtectionProvider != null)
-             {
-                 manager.UserTokenProvider =
-                     new DataProtectorTokenProvider<KeyHubUser>(dataProtectionProvider.Create("ASP.NET Identity"));
-             }
-             return manager;
-         }*/
     }
-
-    // Configure the RoleManager used in the application. RoleManager is defined in the ASP.NET Identity core assembly
-  /*  public class ApplicationRoleManager : RoleManager<IdentityRole>
-    {
-        public ApplicationRoleManager(IRoleStore<IdentityRole,string> roleStore)
-            : base(roleStore)
-        {
-        }
-
-        public static ApplicationRoleManager Create(IdentityFactoryOptions<ApplicationRoleManager> options, IOwinContext context)
-        {
-            return new ApplicationRoleManager(new RoleStore<IdentityRole>(context.Get<DataContext>()));
-        }
-    }*/
 
     public class EmailService : IIdentityMessageService
     {

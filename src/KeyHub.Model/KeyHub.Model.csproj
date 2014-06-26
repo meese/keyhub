@@ -62,7 +62,9 @@
     <Compile Include="Definition\Application\TransactionIgnoredItem.cs" />
     <Compile Include="Definition\Application\CustomerAppIssue.cs" />
     <Compile Include="Definition\Application\TransactionStatus.cs" />
+    <Compile Include="Definition\Identity\KeyHubRole.cs" />
     <Compile Include="Definition\Identity\KeyHubUser.cs" />
+    <Compile Include="Definition\Identity\KeyHubUserLogin.cs" />
     <Compile Include="Definition\Membership\OAuthMembership.cs" />
     <Compile Include="Definition\Membership\Rights\BelongToEntity.cs" />
     <Compile Include="Definition\Membership\Rights\EditLicenseInfo.cs" />

@@ -17,6 +17,7 @@ using KeyHub.Model.Definition.Identity;
 using Microsoft.Ajax.Utilities;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
+using Microsoft.Owin.Security;
 using Microsoft.Web.WebPages.OAuth;
 using KeyHub.Data;
 using KeyHub.Web.Models;
@@ -179,43 +180,26 @@ namespace KeyHub.Web.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel model, string returnUrl)
         {
-            using (var dataContext = dataContextFactory.Create())
+            if (ModelState.IsValid)
             {
-                var signInManager = new KeyHubSignInManager(dataContext.CreateUserManager(),
-                    HttpContext.GetOwinContext().Authentication);
-                if (!ModelState.IsValid)
-                {
-                    return View(model);
-                }
 
-                // This doen't count login failures towards lockout only two factor authentication
-                // To enable password failures to trigger lockout, change to shouldLockout: true
-                var result = signInManager.PasswordSignIn(model.Email, model.Password, model.RememberMe,
-                            shouldLockout: false);
-                switch (result)
-                {
-                    case SignInStatus.Success:
-                        return Redirect(returnUrl);
-                    //case SignInStatus.LockedOut:
-                     //   return Redirect(returnUrl);
-                    //case SignInStatus.RequiresVerification:
-                    //    return RedirectToAction("SendCode", new {ReturnUrl = returnUrl});
-                    case SignInStatus.Failure:
-                    default:
-                        ModelState.AddModelError("", "Invalid login attempt.");
-                        return View(model);
-                }
-            }
-            /*  if (ModelState.IsValid)
-            {
+
                 using (var dataContext = dataContextFactory.Create())
                 {
-                    var user = dataContext.Users.Where(u => u.Email == model.Email).SingleOrDefault();
-
-                    if (user != null)
+                    var signInManager = new KeyHubSignInManager(dataContext.CreateUserManager(),
+                        HttpContext.GetOwinContext().Authentication);
+                    if (!ModelState.IsValid)
                     {
-                        if (WebSecurity.Login(user.MembershipUserIdentifier, model.Password, persistCookie: model.RememberMe))
-                        {
+                        return View(model);
+                    }
+
+                    // This doen't count login failures towards lockout only two factor authentication
+                    // To enable password failures to trigger lockout, change to shouldLockout: true
+                    var result = signInManager.PasswordSignIn(model.Email, model.Password, model.RememberMe,
+                        shouldLockout: false);
+                    switch (result)
+                    {
+                        case SignInStatus.Success:
                             if (Url.IsLocalUrl(returnUrl))
                             {
                                 return Redirect(returnUrl);
@@ -224,15 +208,26 @@ namespace KeyHub.Web.Controllers
                             {
                                 return RedirectToAction("Index", "Home");
                             }
-                        }
+                        case SignInStatus.LockedOut:
+                            ModelState.AddModelError("", "You have been locked out of your account");
+                            return View(model);
+                        case SignInStatus.Failure:
+                        default:
+                            ModelState.AddModelError("", "The user name or password provided is incorrect");
+                            return View(model);
                     }
-
-                    ModelState.AddModelError("", "The user name or password provided is incorrect.");
-                }
-            }*/
-
+                }    
+            }
             // If we got this far, something failed, redisplay form
             return View(model);
+        }
+
+        private IAuthenticationManager AuthenticationManager
+        {
+            get
+            {
+                return HttpContext.GetOwinContext().Authentication;
+            }
         }
 
         /// <summary>
@@ -241,8 +236,7 @@ namespace KeyHub.Web.Controllers
         /// <returns>Redirect to home</returns>
         public ActionResult LogOff()
         {
-            WebSecurity.Logout();
-
+            AuthenticationManager.SignOut();
             return RedirectToAction("Index", "Home");
         }
 
@@ -295,16 +289,6 @@ namespace KeyHub.Web.Controllers
                         var result = usermanager.Create(keyHubUser, model.Password);
                         if (result.Succeeded)
                         {
-                            //var code = usermanager.GenerateEmailConfirmationToken(user.Id);
-                        }
-                        else
-                        {
-                            ModelState.AddModelError("", result.Errors.ToString());
-
-                        }
-
-                       /* if (WebSecurity.Login(newMembershipUserIdentifier, model.Password))
-                        {
                             if (Url.IsLocalUrl(returnUrl))
                             {
                                 return Redirect(returnUrl);
@@ -314,7 +298,10 @@ namespace KeyHub.Web.Controllers
                                 return RedirectToAction("Index", "Home");
                             }
                         }
-                        ModelState.AddModelError("", "Failed to create a user with the provided email and password.");*/
+                        else
+                        {
+                            AddErrors(result);
+                        }
                     }
                 }
 
@@ -374,6 +361,14 @@ namespace KeyHub.Web.Controllers
 
             // If we got this far, something failed, redisplay form
             return View(model);
+        }
+
+        private void AddErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error);
+            }
         }
 
         #region OpenAuth
