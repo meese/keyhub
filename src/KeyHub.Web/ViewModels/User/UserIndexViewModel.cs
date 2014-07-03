@@ -1,4 +1,5 @@
 ﻿using KeyHub.Data;
+using KeyHub.Model.Definition.Identity;
 using KeyHub.Web.ViewModels;
 using KeyHub.Model;
 using System;
@@ -22,15 +23,20 @@ namespace KeyHub.Web.ViewModels.User
         /// </summary>
         /// <param name="currentUser">Current user</param>
         /// <param name="users">List of users to show</param>
-        public UserIndexViewModel(Model.User currentUser, IEnumerable<Model.User> users)
+        public UserIndexViewModel(Model.User currentUser,KeyHubUser keyHubUser, IEnumerable<Model.User> users)
             : this()
         {
+            if (keyHubUser != null)
+                this.HasLocalAccount = true;
+
             CurrentUser = new CurrentUserViewModel(currentUser);
 
             Users = new List<UserIndexViewItem>(
                 from u in users select new UserIndexViewItem(u)
                 );
         }
+
+        public bool HasLocalAccount { get; set; }
 
         /// <summary>
         /// List of users
@@ -41,6 +47,7 @@ namespace KeyHub.Web.ViewModels.User
         /// Gets the current user viewmodel
         /// </summary>
         public CurrentUserViewModel CurrentUser { get; private set; }
+
     }
 
     /// <summary>

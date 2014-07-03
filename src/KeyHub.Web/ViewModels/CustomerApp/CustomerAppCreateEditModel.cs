@@ -5,7 +5,6 @@ using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using DotNetOpenAuth.Messaging;
 using KeyHub.Data;
 using KeyHub.Data.BusinessRules;
 using KeyHub.Model;
@@ -107,7 +106,7 @@ namespace KeyHub.Web.ViewModels.CustomerApp
             else
             {
                 customerApp.LicenseCustomerApps.Clear();
-                customerApp.LicenseCustomerApps.AddRange(
+                customerApp.LicenseCustomerApps.ToList().AddRange(
                     allowedLicenses.Select(lid => new LicenseCustomerApp()
                     {
                         CustomerApp = customerApp,

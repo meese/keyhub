@@ -1,6 +1,4 @@
-﻿using DotNetOpenAuth.AspNet;
-using DotNetOpenAuth.AspNet.Clients;
-using DotNetOpenAuth.Messaging;
+﻿
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,7 +13,7 @@ using KeyHub.Common.Extensions;
 
 namespace KeyHub.Web
 {
-    public class MicrosoftScopedClient: IAuthenticationClient
+   /* public class MicrosoftScopedClient: IAuthenticationClient
     {
         private string clientId;
         private string clientSecret;
@@ -202,5 +200,5 @@ namespace KeyHub.Web
             public string Personal { get; set; }
             public string Business { get; set; }
         }
-    }
+    }*/
 }

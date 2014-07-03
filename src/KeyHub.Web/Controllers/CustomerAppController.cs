@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using DotNetOpenAuth.Messaging;
 using KeyHub.Data.BusinessRules;
 using KeyHub.Model;
 using KeyHub.Web.ViewModels.CustomerApp;

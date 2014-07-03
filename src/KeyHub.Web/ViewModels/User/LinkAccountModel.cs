@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Principal;
 using System.Web;
 using KeyHub.Data;
-using Microsoft.Web.WebPages.OAuth;
+using Microsoft.Owin.Security;
 
 namespace KeyHub.Web.ViewModels.User
 {
@@ -17,15 +17,18 @@ namespace KeyHub.Web.ViewModels.User
         public static LinkAccountModel ForUser(IDataContext context, IIdentity identity)
         {
             var user = context.GetUser(identity);
-
-            var allProviders = OAuthWebSecurity.RegisteredClientData.Select(c => c.DisplayName).ToArray();
+            var allProviders =
+                HttpContext.Current.GetOwinContext()
+                    .Authentication.GetExternalAuthenticationTypes()
+                    .Select(c => c.Caption)
+                    .ToArray();
 
             //  Match each linked provider to the member of allProviders as allProviders has proper casing (Google, not google)
-            var linkedProviders = OAuthWebSecurity.GetAccountsFromUserName(user.MembershipUserIdentifier)
-                .Select(lp => allProviders.Single(ap => ap.ToLower() == lp.Provider.ToLower()))
+            var identityUser = context.CreateUserManager().Users.First(u => u.Id == user.MembershipUserIdentifier);
+            var linkedProviders = identityUser.Logins.Select(lp => allProviders.Single(ap => ap.ToLower() == lp.LoginProvider.ToLower()))
                 .ToArray();
 
-            var loginMethodCount = linkedProviders.Count() + (OAuthWebSecurity.HasLocalAccount(user.UserId) ? 1 : 0);
+            var loginMethodCount = linkedProviders.Count() + 1;
 
             var model = new LinkAccountModel()
             {
@@ -33,6 +36,7 @@ namespace KeyHub.Web.ViewModels.User
                 OpenIDProvidersAvailable = allProviders.Where(p => !linkedProviders.Contains(p)),
                 AllowRemovingLogin = loginMethodCount > 1
             };
+
             return model;
         }
     }

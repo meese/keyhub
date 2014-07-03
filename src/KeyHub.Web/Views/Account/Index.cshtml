@@ -24,7 +24,7 @@
 
 <p>
     @Html.ActionLink("Edit", "Edit", new { id=Model.CurrentUser.UserId }, new { @class = "Btn"})
-    @if (OAuthWebSecurity.HasLocalAccount(Model.CurrentUser.UserId))
+    @if (Model.HasLocalAccount)
     {
         @Html.ActionLink("Change password", "ChangePassword", new {}, new { @class = "Btn"})
     }

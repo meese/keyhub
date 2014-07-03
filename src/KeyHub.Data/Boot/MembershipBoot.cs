@@ -20,15 +20,15 @@ namespace KeyHub.Data.Boot
 
         public KernelEventCompletedArguments Execute()
         {
-            WebSecurity.InitializeDatabaseConnection("DataContext", "Users", "UserId", "MembershipUserIdentifier", autoCreateTables:true);
+          //  WebSecurity.InitializeDatabaseConnection("DataContext", "Users", "UserId", "MembershipUserIdentifier", autoCreateTables:true);
 
             // Create administator Role if not already present
-            var currentRoles = Roles.GetAllRoles();
+         /*   var currentRoles = Roles.GetAllRoles();
             if (!currentRoles.Contains(Role.SystemAdmin))
                 Roles.CreateRole(Role.SystemAdmin);
             
             if (!currentRoles.Contains(Role.RegularUser))
-                Roles.CreateRole(Role.RegularUser);
+                Roles.CreateRole(Role.RegularUser);*/
 
             // Create an administator of not already present        
           /*  if (!Roles.GetUsersInRole(Role.SystemAdmin).Any())

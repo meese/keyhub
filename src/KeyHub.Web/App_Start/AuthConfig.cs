@@ -4,7 +4,6 @@ using System.Configuration;
 using System.Linq;
 using System.Web;
 using System.Web.Configuration;
-using Microsoft.Web.WebPages.OAuth;
 
 namespace KeyHub.Web
 {
@@ -12,38 +11,7 @@ namespace KeyHub.Web
     {
         public static void RegisterAuth()
         {
-            var microsoftClientId = WebConfigurationManager.AppSettings["microsoftClientId"];
-            var microsoftClientSecret = WebConfigurationManager.AppSettings["microsoftClientSecret"];
-            if (!string.IsNullOrEmpty(microsoftClientId) && !string.IsNullOrEmpty(microsoftClientSecret))
-            {
-                OAuthWebSecurity.RegisterClient(
-                    new MicrosoftScopedClient(microsoftClientId,
-                                              microsoftClientSecret,
-                                              "wl.basic wl.emails"),
-                                              "Microsoft",
-                                              null);
-                
-            }
 
-            var twitterConsumerKey = WebConfigurationManager.AppSettings["twitterConsumerKey"];
-            var twitterConsumerSecret = WebConfigurationManager.AppSettings["twitterConsumerSecret"];
-            if (!string.IsNullOrEmpty(twitterConsumerKey) && !string.IsNullOrEmpty(twitterConsumerSecret))
-            {
-                OAuthWebSecurity.RegisterTwitterClient(
-                    consumerKey: twitterConsumerKey,
-                    consumerSecret: twitterConsumerSecret);
-            }
-
-            var facebookAppId = WebConfigurationManager.AppSettings["facebookAppId"];
-            var facebookAppSecret = WebConfigurationManager.AppSettings["facebookAppSecret"];
-            if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
-            {
-                OAuthWebSecurity.RegisterFacebookClient(
-                    appId: facebookAppId,
-                    appSecret: facebookAppSecret);
-            }
-
-            OAuthWebSecurity.RegisterGoogleClient();
         }
     }
 }

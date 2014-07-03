@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using System.Web.Configuration;
+using Castle.Core.Internal;
 using KeyHub.Data;
 using KeyHub.Model.Definition.Identity;
 using Microsoft.AspNet.Identity;
@@ -43,14 +45,42 @@ namespace KeyHub.Web
             // Once you check this option, your second step of verification during the login process will be remembered on the device where you logged in from.
             // This is similar to the RememberMe option when you log in.
             app.UseTwoFactorRememberBrowserCookie(DefaultAuthenticationTypes.TwoFactorRememberBrowserCookie);
+
+
+            //external login services
+            var microsoftClientId = WebConfigurationManager.AppSettings["microsoftClientId"];
+            var microsoftClientSecret = WebConfigurationManager.AppSettings["microsoftClientSecret"];
+            if (!microsoftClientSecret.IsNullOrEmpty() && !microsoftClientId.IsNullOrEmpty())
+                app.UseMicrosoftAccountAuthentication(
+                    clientId: microsoftClientId,
+                    clientSecret: "");
+
+            var twitterConsumerKey = WebConfigurationManager.AppSettings["twitterConsumerKey"];
+            var twitterConsumerSecret = WebConfigurationManager.AppSettings["twitterConsumerSecret"];
+            if (!twitterConsumerKey.IsNullOrEmpty() && !twitterConsumerSecret.IsNullOrEmpty())
+                app.UseTwitterAuthentication(
+                   consumerKey: twitterConsumerKey,
+                   consumerSecret: twitterConsumerSecret);
+
+            var facebookAppId = WebConfigurationManager.AppSettings["facebookAppId"];
+            var facebookAppSecret = WebConfigurationManager.AppSettings["facebookAppSecret"];
+            if (!facebookAppId.IsNullOrEmpty() && !facebookAppSecret.IsNullOrEmpty())
+                app.UseFacebookAuthentication(
+                   appId: facebookAppId,
+                   appSecret: facebookAppSecret);
+
+            app.UseGoogleAuthentication();
+
         }
 
 
     }
 
+
     public class KeyHubSignInManager : SignInManager<KeyHubUser, string>
     {
-        public KeyHubSignInManager(UserManager<KeyHubUser, string> userManager, IAuthenticationManager authenticationManager) : base(userManager, authenticationManager)
+        public KeyHubSignInManager(UserManager<KeyHubUser, string> userManager, IAuthenticationManager authenticationManager)
+            : base(userManager, authenticationManager)
         {
         }
     }

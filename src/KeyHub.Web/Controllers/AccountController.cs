@@ -11,19 +11,17 @@ using System.Security.Principal;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
-using DotNetOpenAuth.AspNet;
 using KeyHub.Model;
 using KeyHub.Model.Definition.Identity;
 using Microsoft.Ajax.Utilities;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
+using Microsoft.Owin.Host.SystemWeb;
 using Microsoft.Owin.Security;
-using Microsoft.Web.WebPages.OAuth;
 using KeyHub.Data;
 using KeyHub.Web.Models;
 using KeyHub.Web.ViewModels.User;
 using MvcFlash.Core;
-using WebMatrix.WebData;
 using Membership = System.Web.Security.Membership;
 
 namespace KeyHub.Web.Controllers
@@ -53,7 +51,10 @@ namespace KeyHub.Web.Controllers
                                  .Include(u => u.Rights.Select(r => r.RightObject))
                                  .OrderBy(u => u.MembershipUserIdentifier);
 
-                var viewModel = new UserIndexViewModel(context.GetUser(HttpContext.User.Identity), usersQuery.ToList());
+                var user = context.GetUser(HttpContext.User.Identity);
+                var identityUser = dataContextFactory.Create().CreateUserManager().FindById(user.MembershipUserIdentifier);
+
+                var viewModel = new UserIndexViewModel(user, identityUser, usersQuery.ToList());
 
                 return View(viewModel);
             }
@@ -66,7 +67,7 @@ namespace KeyHub.Web.Controllers
         [Authorize(Roles = Role.SystemAdmin)]
         public ActionResult Create()
         {
-            var viewModel = new UserCreateViewModel(thisOne:true);
+            var viewModel = new UserCreateViewModel(thisOne: true);
             return View(viewModel);
         }
 
@@ -80,23 +81,41 @@ namespace KeyHub.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Attempt to register the user
-                var newMembershipUserIdentifier = Guid.NewGuid().ToString();
-
-                WebSecurity.CreateUserAndAccount(newMembershipUserIdentifier, viewModel.User.Password, new { Email = viewModel.User.Email });
-
-                Flash.Success("New user succesfully created");
-
-                if (Url.IsLocalUrl(viewModel.RedirectUrl))
+                using (var dataContext = dataContextFactory.Create())
                 {
-                    return Redirect(viewModel.RedirectUrl);
-                }
-                else
-                {
-                    return RedirectToAction("Index", "Home");
+                    var usermanager = dataContext.CreateUserManager();
+                    var newMembershipUserIdentifier = Guid.NewGuid().ToString();
+                    var keyHubUser = new KeyHubUser
+                    {
+                        Id = newMembershipUserIdentifier,
+                        UserName = viewModel.User.Email,
+                        Email = viewModel.User.Email
+                    };
+
+                    var user = new User
+                    {
+                        MembershipUserIdentifier = newMembershipUserIdentifier,
+                        AspIdentityUserIdentifier = newMembershipUserIdentifier,
+                        Email = viewModel.User.Email
+                    };
+
+                    keyHubUser.User = user;
+                    var result = usermanager.Create(keyHubUser, viewModel.User.Password);
+                    if (result.Succeeded)
+                        Flash.Success("New user succesfully created");
+                    else
+                        AddErrors(result);
+
+                    if (Url.IsLocalUrl(viewModel.RedirectUrl))
+                    {
+                        return Redirect(viewModel.RedirectUrl);
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
                 }
             }
-
             //Viewmodel invalid, recall create
             return Create();
         }
@@ -117,7 +136,7 @@ namespace KeyHub.Web.Controllers
 
                 if (!User.IsInRole(Role.SystemAdmin) && user.MembershipUserIdentifier != User.Identity.Name)
                     return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
-                
+
                 var viewModel = new UserEditViewModel()
                 {
                     UserId = user.UserId,
@@ -216,19 +235,13 @@ namespace KeyHub.Web.Controllers
                             ModelState.AddModelError("", "The user name or password provided is incorrect");
                             return View(model);
                     }
-                }    
+                }
             }
             // If we got this far, something failed, redisplay form
             return View(model);
         }
 
-        private IAuthenticationManager AuthenticationManager
-        {
-            get
-            {
-                return HttpContext.GetOwinContext().Authentication;
-            }
-        }
+
 
         /// <summary>
         /// Log off
@@ -348,14 +361,20 @@ namespace KeyHub.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                if(WebSecurity.ChangePassword(User.Identity.Name, model.OldPassword, model.NewPassword))
+                using (var userManager = dataContextFactory.Create().CreateUserManager())
                 {
-                    Flash.Success("Your password has been changed.");
-                    return RedirectToAction("Index");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "The current password is incorrect or the new password is invalid.");
+                    var result = userManager.ChangePassword(User.Identity.GetUserId(), model.OldPassword,
+                        model.NewPassword);
+
+                    if (result.Succeeded)
+                    {
+                        Flash.Success("Your password has been changed.");
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        AddErrors(result);
+                    }
                 }
             }
 
@@ -363,13 +382,7 @@ namespace KeyHub.Web.Controllers
             return View(model);
         }
 
-        private void AddErrors(IdentityResult result)
-        {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError("", error);
-            }
-        }
+
 
         #region OpenAuth
         /// <summary>
@@ -380,8 +393,9 @@ namespace KeyHub.Web.Controllers
         [AllowAnonymous]
         public ActionResult ExternalLoginsList(string returnUrl)
         {
+            var loginProviders = HttpContext.GetOwinContext().Authentication.GetExternalAuthenticationTypes();
             ViewBag.ReturnUrl = returnUrl;
-            return PartialView("_ExternalLoginsListPartial", OAuthWebSecurity.RegisteredClientData);
+            return PartialView("_ExternalLoginsListPartial", loginProviders);
         }
 
         /// <summary>
@@ -394,7 +408,7 @@ namespace KeyHub.Web.Controllers
         [AllowAnonymous]
         public ActionResult ExternalLogin(string provider, string returnUrl)
         {
-            return new ExternalLoginResult(provider, Url.Action("ExternalLoginCallback", new { ReturnUrl = returnUrl }));
+            return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl }));
         }
 
         /// <summary>
@@ -405,40 +419,85 @@ namespace KeyHub.Web.Controllers
         [AllowAnonymous]
         public ActionResult ExternalLoginCallback(string returnUrl)
         {
-            //Get result from OpenID provider
-            AuthenticationResult authenticationResult = OAuthWebSecurity.VerifyAuthentication(Url.Action("ExternalLoginCallback", new { ReturnUrl = returnUrl }));
-            if (!authenticationResult.IsSuccessful)
+            var loginInfo = AuthenticationManager.GetExternalLoginInfo();
+            if (loginInfo == null)
             {
-                return RedirectToAction("ExternalLoginFailure");
+                return View("ExternalLoginFailure");
+            }
+            using (var dataContext = dataContextFactory.Create())
+            {
+                // Sign in the user with this external login provider if the user already has a login
+                var signInManager = new KeyHubSignInManager(dataContext.CreateUserManager(),
+                    HttpContext.GetOwinContext().Authentication);
+                var resultLogin = signInManager.ExternalSignIn(loginInfo, isPersistent: false);
+                switch (resultLogin)
+                {
+                    case SignInStatus.Success:
+                        return RedirectTo(returnUrl);
+                    case SignInStatus.LockedOut:
+                    case SignInStatus.RequiresVerification:
+                        return RedirectToAction("ExternalLoginFailure");
+                    case SignInStatus.Failure:
+                    default:
+                        break;
+                }
             }
 
-            //Login with authentication result
-            if(OAuthWebSecurity.Login(authenticationResult.Provider, authenticationResult.ProviderUserId, createPersistentCookie: true))
-            {
-                return RedirectTo(returnUrl);
-            }
-
-            var userName = OAuthWebSecurity.GetUserName(authenticationResult.Provider, authenticationResult.ProviderUserId);
-            var loginData = OAuthWebSecurity.SerializeProviderUserId(authenticationResult.Provider, authenticationResult.ProviderUserId);
-            var displayName = OAuthWebSecurity.GetOAuthClientData(authenticationResult.Provider).DisplayName;
-
-            // If the current user is logged in add the new account
             if (User.Identity.IsAuthenticated)
             {
-                OAuthWebSecurity.CreateOrUpdateAccount(authenticationResult.Provider, authenticationResult.ProviderUserId, User.Identity.Name);
-                return RedirectTo(returnUrl);
+                // If the current user is logged in add the new account
+                using (var db = dataContextFactory.Create())
+                {
+                    var userManager = db.CreateUserManager();
+
+                    // Add to asp identity external login table
+                    var resultAddLogin = userManager.AddLogin(User.Identity.GetUserId(), loginInfo.Login);
+                    if (!resultAddLogin.Succeeded)
+                        AddErrors(resultAddLogin);
+                    return RedirectToAction("Index");
+                }
             }
 
-            var membershipUserIdentifier = Guid.NewGuid().ToString();
+            // Get the information about the user from the external login provider
+            var userName = loginInfo.ExternalIdentity.GetUserName();
+            var loginData = loginInfo.Login;
+            var email = loginInfo.Email;
 
+            //create our user and add external login
             try
             {
                 // Insert a new user into the database
                 using (var db = dataContextFactory.Create())
                 {
-                    // Insert name into the profile table
-                    db.Users.Add(new User { MembershipUserIdentifier = membershipUserIdentifier, Email = authenticationResult.UserName });
-                    db.SaveChanges();
+                    var userManager = db.CreateUserManager();
+                    var membershipUserIdentifier = Guid.NewGuid().ToString();
+
+                    // Add to our user table
+                    var user = new User { MembershipUserIdentifier = membershipUserIdentifier, Email = email };
+                    db.Users.Add(user);
+
+                    // Add to asp identity table
+                    var keyHubUser = new KeyHubUser() { UserName = userName, Email = email, Id = membershipUserIdentifier, User = user };
+                    var result = userManager.Create(keyHubUser);
+                    if (!result.Succeeded)
+                    {
+                        AddErrors(result);
+                        return RedirectTo(returnUrl);
+                    }
+
+                    // Add to asp identity external login table
+                    var resultAddLogin = userManager.AddLogin(membershipUserIdentifier, loginInfo.Login);
+
+                    if (resultAddLogin.Succeeded)
+                    {
+                        var signInManager = new KeyHubSignInManager(db.CreateUserManager(), HttpContext.GetOwinContext().Authentication);
+                        signInManager.SignIn(keyHubUser, isPersistent: false, rememberBrowser: false);
+                        db.SaveChanges();
+
+                        return RedirectTo(returnUrl);
+                    }
+
+                    AddErrors(resultAddLogin);
                 }
             }
             catch (DbUpdateException e)
@@ -467,10 +526,7 @@ namespace KeyHub.Web.Controllers
                 }
             }
 
-            OAuthWebSecurity.CreateOrUpdateAccount(authenticationResult.Provider, authenticationResult.ProviderUserId, membershipUserIdentifier);
-            OAuthWebSecurity.Login(authenticationResult.Provider, authenticationResult.ProviderUserId, createPersistentCookie: true);
-
-            return RedirectTo(returnUrl);     
+            return RedirectTo(returnUrl);
         }
 
         /// <summary>
@@ -496,27 +552,34 @@ namespace KeyHub.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult LinkAccount(string provider)
         {
-            return new ExternalLoginResult(provider, Url.Action("LinkAccountCallback"));
+            return new ChallengeResult(provider, Url.Action("LinkAccountCallback", new { externalProvider = provider }));
         }
 
-        public ActionResult LinkAccountCallback()
+        public ActionResult LinkAccountCallback(string externalProvider)
         {
-            AuthenticationResult authenticationResult = OAuthWebSecurity.VerifyAuthentication(Url.Action("LinkAccountCallback"));
-            if (!authenticationResult.IsSuccessful)
+            var loginInfo = AuthenticationManager.GetExternalLoginInfo(XsrfKey, User.Identity.GetUserId());
+
+            if (loginInfo == null)
             {
                 Flash.Error("The account was unable to be linked.");
                 return RedirectToAction("LinkAccount");
             }
 
-            if (OAuthWebSecurity.Login(authenticationResult.Provider, authenticationResult.ProviderUserId, createPersistentCookie: true))
+            using (var userManager = dataContextFactory.Create().CreateUserManager())
             {
-                Flash.Success("Your " + authenticationResult.Provider + " login was already linked.");
-                return RedirectToAction("LinkAccount");
-            }
+                var result = userManager.AddLogin(User.Identity.GetUserId(), loginInfo.Login);
 
-            OAuthWebSecurity.CreateOrUpdateAccount(authenticationResult.Provider, authenticationResult.ProviderUserId, User.Identity.Name);
-            Flash.Success("Your " + authenticationResult.Provider + " login has been linked.");
+                if (!result.Succeeded)
+                {
+                    AddErrors(result);
+                    Flash.Error("The account was unable to be linked.");
+                }
+                else
+                    Flash.Success("Your " + externalProvider + " login has been linked.");
+
+            }
             return RedirectToAction("LinkAccount");
+
         }
 
         public class UnlinkLoginModel
@@ -526,7 +589,7 @@ namespace KeyHub.Web.Controllers
 
         public ActionResult UnlinkLogin(string provider)
         {
-            return View(new UnlinkLoginModel() {Provider = provider});
+            return View(new UnlinkLoginModel() { Provider = provider });
         }
 
         [HttpPost, ValidateAntiForgeryToken, ActionName("UnlinkLogin")]
@@ -535,7 +598,7 @@ namespace KeyHub.Web.Controllers
             using (var context = dataContextFactory.Create())
             {
                 var model = LinkAccountModel.ForUser(context, User.Identity);
-                
+
                 if (!model.AllowRemovingLogin)
                 {
                     Flash.Error(
@@ -543,15 +606,19 @@ namespace KeyHub.Web.Controllers
                 }
                 else
                 {
-                    var providerAccount = OAuthWebSecurity.GetAccountsFromUserName(User.Identity.Name)
-                        .Single(a => a.Provider.ToLower() == provider.ToLower());
+                    var usermanager = context.CreateUserManager();
+                    var user =
+                        usermanager.Users.FirstOrDefault(u => u.Id == User.Identity.GetUserId());
+                    var providerAccount = user.Logins.Single(l => l.LoginProvider.ToLower() == provider.ToLower());
 
-                    if (OAuthWebSecurity.DeleteAccount(providerAccount.Provider, providerAccount.ProviderUserId))
+                    var result = usermanager.RemoveLogin(user.Id,new UserLoginInfo(providerAccount.LoginProvider,providerAccount.ProviderKey));
+                    if (result.Succeeded)
                     {
                         Flash.Success("Your " + provider + " login has been unlinked");
                     }
                     else
                     {
+                        AddErrors(result);
                         Flash.Error("The account could not be unlinked.");
                     }
                 }
@@ -560,6 +627,9 @@ namespace KeyHub.Web.Controllers
             return RedirectToAction("LinkAccount");
         }
 
+        #endregion
+
+        #region Helpers
         /// <summary>
         /// Redirect to url or home
         /// </summary>
@@ -574,20 +644,50 @@ namespace KeyHub.Web.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        internal class ExternalLoginResult : ActionResult
+        private const string XsrfKey = "XsrfId";
+
+        internal class ChallengeResult : HttpUnauthorizedResult
         {
-            public ExternalLoginResult(string provider, string returnUrl)
+            public ChallengeResult(string provider, string redirectUri)
+                : this(provider, redirectUri, null)
             {
-                Provider = provider;
-                ReturnUrl = returnUrl;
             }
 
-            public string Provider { get; private set; }
-            public string ReturnUrl { get; private set; }
+            public ChallengeResult(string provider, string redirectUri, string userId)
+            {
+                LoginProvider = provider;
+                RedirectUri = redirectUri;
+                UserId = userId;
+            }
+
+            public string LoginProvider { get; set; }
+            public string RedirectUri { get; set; }
+            public string UserId { get; set; }
 
             public override void ExecuteResult(ControllerContext context)
             {
-                OAuthWebSecurity.RequestAuthentication(Provider, ReturnUrl);
+                var properties = new AuthenticationProperties { RedirectUri = RedirectUri };
+                if (UserId != null)
+                {
+                    properties.Dictionary[XsrfKey] = UserId;
+                }
+                context.HttpContext.GetOwinContext().Authentication.Challenge(properties, LoginProvider);
+            }
+        }
+
+        private void AddErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error);
+            }
+        }
+
+        private IAuthenticationManager AuthenticationManager
+        {
+            get
+            {
+                return HttpContext.GetOwinContext().Authentication;
             }
         }
         #endregion

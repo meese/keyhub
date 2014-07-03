@@ -6,7 +6,6 @@ using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using Microsoft.Web.WebPages.OAuth;
 
 namespace KeyHub.Web.ViewModels.User
 {
@@ -25,7 +24,7 @@ namespace KeyHub.Web.ViewModels.User
         {
             this.UserId = user.UserId;
             this.Email = user.Email;
-            this.HasLocalAccount = OAuthWebSecurity.HasLocalAccount(user.UserId);
+         //   this.HasLocalAccount = OAuthWebSecurity.HasLocalAccount(user.UserId);
         }
 
         /// <summary>
